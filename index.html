@@ -1,0 +1,1851 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <script>window.IS_DEMO = true;</script>
+<meta charset="UTF-8">
+<title>PIXELVIVOR</title>
+<link rel="stylesheet" href="styles.css?v313">
+<script src="assets/undergroud_city/dungeon1_data.js?v200"></script>
+<script src="assets/monsters_new_data.js?v260"></script>
+<script src="assets/dream_biome_data.js?v260"></script>
+    <script type="module" src="src/main.mjs?v336"></script>
+
+</head>
+<body class="is-demo">
+
+<div id="startScreen" class="fullscreen-overlay" style="z-index: 500; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 3%; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; overflow: hidden;">
+    <video id="startVideo" autoplay loop muted playsinline style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0;">
+        <source src="assets/pixelvivor_seamless_loop.mp4" type="video/mp4">
+    </video>
+    <button id="unmuteBtn" style="position: absolute; bottom: 20px; right: 20px; z-index: 10; padding: 10px 20px; background: rgba(217,189,117,0.9); color: #000; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px;">🔊 Sound</button>
+    <div class="start-screen-controls">
+      <button id="btnStartGame" class="start-btn-graphic start-btn-main" title="Start Game">
+        <img src="assets/ui/btn_start.webp" alt="START">
+      </button>
+      <div class="start-btn-row">
+        <button id="btnStartSave" class="start-btn-graphic start-btn-sub" title="Save Game">
+          <img src="assets/ui/btn_save.webp" alt="SAVE">
+        </button>
+        <button id="btnStartLoad" class="start-btn-graphic start-btn-sub" title="Load Game">
+          <img src="assets/ui/btn_load.webp" alt="LOAD">
+        </button>
+        <input type="file" id="saveFileInput" accept=".json" style="display: none;">
+        <button class="start-btn-graphic start-btn-sub" onclick="alert('Settings available in Camp')" title="Settings">
+          <img src="assets/ui/btn_settings.webp" alt="SETTINGS">
+        </button>
+      </div>
+    </div>
+</div>
+<script>
+  document.getElementById('unmuteBtn').addEventListener('click', function() {
+    const vid = document.getElementById('startVideo');
+    vid.muted = false;
+    vid.play();
+    this.style.display = 'none';
+  });
+</script>
+
+<div id="loadingScreen" class="fullscreen-overlay" style="z-index: 499; background: #0a0a0c url('assets/loading_screen_bgr_Character.webp') center/cover no-repeat; display: none; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 50px; box-sizing: border-box; color: #fff;">
+   <div style="background: rgba(10, 14, 18, 0.85); padding: 16px 28px 18px; border-radius: 12px; border: 1px solid rgba(217, 189, 117, 0.45); box-shadow: 0 10px 30px rgba(0,0,0,0.85); display: flex; flex-direction: column; align-items: center; backdrop-filter: blur(6px); max-width: 500px; width: 90%;">
+       <h2 style="font-family: Georgia, serif; color: #d9bd75; margin: 0 0 8px 0; font-size: 22px; letter-spacing: 2px; text-shadow: 0 2px 8px rgba(0,0,0,0.9); text-transform: uppercase;">Loading World...</h2>
+       <div id="loadingTip" style="font-family: Georgia, 'Times New Roman', serif; font-style: italic; font-size: 13.5px; color: #e2e8f0; text-align: center; line-height: 1.4; margin: 0 0 12px 0; min-height: 38px; display: flex; align-items: center; justify-content: center; text-shadow: 0 1px 3px rgba(0,0,0,0.95), 0 0 6px rgba(0,0,0,0.85); transition: opacity 0.25s ease;">
+           "Your weapons strike automatically. Focus on dodging and positioning."
+       </div>
+       <div style="width: 100%; max-width: 360px; height: 14px; background: rgba(20, 24, 28, 0.9); border: 2px solid #5a4825; border-radius: 7px; overflow: hidden; box-shadow: inset 0 2px 5px rgba(0,0,0,0.8);">
+           <div id="loadingBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #d9bd75, #ffeb3b); box-shadow: 0 0 12px rgba(255,235,59,0.5); transition: width 0.08s linear;"></div>
+       </div>
+   </div>
+</div>
+
+<div id="storyIntroScreen" class="story-intro-overlay" style="display: none;" role="dialog" aria-modal="true" aria-label="The Chronicles of Eld - Prologue">
+  <div id="storyBackdropA" class="story-backdrop-layer active"></div>
+  <div id="storyBackdropB" class="story-backdrop-layer"></div>
+  <div id="storyTintLayer" class="story-tint-layer"></div>
+  <canvas id="storyParticleCanvas" class="story-particle-canvas"></canvas>
+  <div class="story-vignette-layer"></div>
+
+  <header class="story-topbar">
+    <div class="story-header-brand">
+      <img src="assets/ui/pixelvivor_emblem.webp" alt="" class="story-header-emblem">
+      <div class="story-header-titles">
+        <span class="story-header-main">CHRONICLES OF ELD</span>
+        <small id="storyHeaderSub" class="story-header-sub">THE GRIMDARK PROLOGUE</small>
+      </div>
+    </div>
+    <div class="story-header-actions">
+      <button id="storyAutoBtn" type="button" class="story-top-pill active" title="Toggle Auto-Advance">⏳ Auto: ON</button>
+      <button id="storyMuteBtn" type="button" class="story-top-pill" title="Toggle Prologue Music">🔊 Audio</button>
+      <button id="storySkipBtn" type="button" class="story-skip-pill" title="Skip Prologue and Enter Camp (Esc)">
+        <span>Skip Prologue</span>
+        <kbd>ESC</kbd>
+        <span class="story-skip-arrow">»</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="story-stage">
+    <article id="storyParchmentCard" class="story-parchment-card" title="Click to reveal text or advance chapter">
+      <span class="story-corner story-corner-tl"></span>
+      <span class="story-corner story-corner-tr"></span>
+      <span class="story-corner story-corner-bl"></span>
+      <span class="story-corner story-corner-br"></span>
+
+      <div class="story-act-header">
+        <span id="storyActBadge" class="story-act-badge">ACT I OF IV</span>
+        <span class="story-act-dot">·</span>
+        <span id="storyActLocation" class="story-act-location">THE GREAT TREE SANCTUARIES</span>
+      </div>
+
+      <h1 id="storyChapterTitle" class="story-chapter-title">The Prisons of Flesh</h1>
+
+      <div class="story-ornament" aria-hidden="true">
+        <span class="story-ornament-line"></span>
+        <span class="story-ornament-gem"></span>
+        <span class="story-ornament-line"></span>
+      </div>
+
+      <blockquote id="storyEpigraph" class="story-epigraph">
+        "The old myths whisper that the Five Great Trees are divine fonts of pure life. It is a lie."
+      </blockquote>
+
+      <div id="storyBody" class="story-body"></div>
+
+      <div class="story-card-footer">
+        <span id="storyPromptHint" class="story-prompt-hint">Click card or press <kbd>SPACE</kbd> to continue</span>
+        <div class="story-auto-track">
+          <div id="storyAutoBar" class="story-auto-bar"></div>
+        </div>
+      </div>
+    </article>
+  </main>
+
+  <footer class="story-controls-bar">
+    <button id="storyPrevBtn" type="button" class="story-nav-btn" title="Previous Chapter (Left Arrow)">
+      <span>← Previous</span>
+    </button>
+
+    <div id="storyRuneDots" class="story-rune-dots" role="tablist" aria-label="Prologue Acts">
+      <button type="button" class="story-rune-dot active" data-act="0" title="Act I: The Prisons of Flesh"><span>I</span></button>
+      <button type="button" class="story-rune-dot" data-act="1" title="Act II: The Final Quiet"><span>II</span></button>
+      <button type="button" class="story-rune-dot" data-act="2" title="Act III: The Fractured Seals"><span>III</span></button>
+      <button type="button" class="story-rune-dot" data-act="3" title="Act IV: The Wayfarer's Burden"><span>IV</span></button>
+    </div>
+
+    <button id="storyNextBtn" type="button" class="story-nav-btn story-nav-primary" title="Next Chapter (Right Arrow / Space)">
+      <span id="storyNextBtnLabel">Next Chapter →</span>
+    </button>
+  </footer>
+</div>
+
+<div id="campAwakeningTransition" class="camp-awakening-overlay" style="display: none;" aria-hidden="true">
+  <div class="camp-awakening-glow"></div>
+  <div class="camp-awakening-content">
+    <img src="assets/ui/pixelvivor_emblem.webp" alt="" class="camp-awakening-emblem">
+    <span class="camp-awakening-eyebrow">ENTERING THE FRONTIER</span>
+    <h2 class="camp-awakening-title">Valley Camp</h2>
+    <div class="story-ornament" style="margin: 8px auto 12px; width: 220px;">
+      <span class="story-ornament-line"></span>
+      <span class="story-ornament-gem"></span>
+      <span class="story-ornament-line"></span>
+    </div>
+    <p class="camp-awakening-sub">"The fire is lit, Wayfarer. Catch your breath before the wilds claim you."</p>
+  </div>
+</div>
+
+<div id="menu">
+  <div class="camp-shell">
+    <header class="camp-header">
+      <div class="camp-brand"><span class="camp-brand-mark" data-sprite="rpg_gem_diamond" data-icon-size="26"></span><span class="camp-brand-title">PIXELVIVOR<small>THE FRONTIER</small></span><span class="camp-demo-badge">DEMO</span></div>
+      <nav class="camp-topbar-settings" aria-label="Camp options">
+        <button id="exportSaveBtn" class="camp-topbar-btn" type="button" title="Save Game" aria-label="Save Game"></button>
+        <button id="importSaveBtn" class="camp-topbar-btn" type="button" title="Load Game" aria-label="Load Game"></button>
+        <button id="tipsButton" class="camp-topbar-btn" type="button" title="Help & Tips" aria-label="Help"></button>
+        <button id="openSettings" class="camp-topbar-btn" type="button" title="Settings" aria-label="Settings"></button>
+        <button id="openCredits" class="camp-topbar-btn" type="button" title="Credits" aria-label="Credits"></button>
+      </nav>
+      <div class="camp-header-right"><button id="openStoryPrologueBtn" type="button" class="camp-prologue-btn" title="Replay The Grimdark Story Prologue">📜 Prologue</button><span id="campVersionTag" class="camp-version-tag">v0.3.336</span><span class="camp-weather"><span data-sprite="rpg_lightSpirit" data-icon-size="28"></span> CLEAR SKIES</span><span class="camp-wallet"><span data-sprite="rpg_coin_gold" data-icon-size="22"></span> <strong id="campGold">120</strong> <small>GOLD</small></span></div>
+    </header>
+    <main class="camp-main">
+      <section class="camp-scene" aria-label="PIXELVIVOR frontier and biome camps">
+        <img id="campBackdrop" class="camp-backdrop" src="assets/camp_valley.jfif" alt="Valley camp pixel-art scene">
+        <div id="campConditionsWidget" class="camp-conditions-widget"></div>
+        <div class="camp-overlay" aria-hidden="true">
+          <!-- Inn Building NPC (Left Building) -->
+          <span id="campSceneInnNpc" class="camp-overlay-marker camp-overlay-npc camp-inn-marker" data-action="open-tab" data-id="tavern" data-npc="inn_rikkt" data-sprite="npc_rikkt" data-icon-size="92" data-image-x="0.18" data-image-y="0.75" title="Innkeeper - Click to visit Inn" style="cursor:pointer;"></span>
+
+          <!-- Center: 2 Biome Familiars + Player + Campfire -->
+          <span id="campSceneFamiliar1" class="camp-overlay-marker camp-overlay-companion camp-familiar-marker" data-npc="fox" data-sprite="campFox" data-icon-size="84" data-image-x="0.34" data-image-y="0.82" style="cursor:pointer;"></span>
+          <span id="campScenePlayer" class="camp-overlay-marker camp-overlay-player" data-npc="wayfarer" data-sprite="player1" data-icon-size="104" data-image-x="0.40" data-image-y="0.81" style="cursor:pointer; z-index:15;"></span>
+          <span class="camp-overlay-marker camp-overlay-fire" data-image-x="0.52" data-image-y="0.81" title="Warm Campfire" style="z-index:8;"><img src="assets/monsters_new/firecamp_anim/preview.webp?v260" alt="Campfire" class="camp-fire-live" style="width:76px;height:76px;object-fit:contain;image-rendering:pixelated;pointer-events:none;"></span>
+          <span id="campSceneFamiliar2" class="camp-overlay-marker camp-overlay-companion camp-familiar-marker" data-npc="aldric" data-sprite="comp_aldric" data-icon-size="92" data-image-x="0.60" data-image-y="0.80" style="cursor:pointer;"></span>
+
+          <!-- Store Building NPC (Right Building) -->
+          <span id="campSceneStoreNpc" class="camp-overlay-marker camp-overlay-npc camp-store-marker" data-action="open-tab" data-id="shop" data-npc="store_bartholomew" data-sprite="npc_bartholomew" data-icon-size="92" data-image-x="0.82" data-image-y="0.76" title="Store Merchant - Click to visit Store" style="cursor:pointer;"></span>
+        </div>
+        <div class="camp-scene-caption"><span id="campSceneEyebrow">WELCOME TO THE FRONTIER</span><strong id="campSceneName">The Frontier</strong><small id="campSceneDetail">Choose your path and prepare for the wilds.</small></div>
+        <div class="camp-scene-vignette"></div>
+      </section>
+      <section class="camp-console">
+        <div class="camp-welcome-row">
+          <div class="camp-welcome">
+            <div class="camp-eyebrow">YOUR ADVENTURE STARTS HERE</div>
+            <h1>Make yourself<br><em>at home.</em></h1>
+            <p>Catch your breath, ready your kit, and see what the frontier has in store.</p>
+          </div>
+          <div id="campPersistentActions" class="camp-home-actions camp-ornate-actions camp-welcome-actions">
+            <button id="campRestBtn" class="camp-ornate-btn camp-ornate-rest" type="button" data-action="rest" aria-label="Rest and recover" title="Fully restore HP and clear all ailments"></button>
+            <button id="campSetOutBtn" class="camp-ornate-btn camp-ornate-setout" type="button" data-action="run" aria-label="Set out into the frontier" title="Embark on your expedition"><span id="campSetOutLabel"></span></button>
+          </div>
+        </div>
+        <div id="campMessage" class="camp-message" role="status"></div>
+        <div class="camp-profile camp-profile-banner" id="campProfileBanner">
+          <button type="button" class="camp-avatar-slot" id="campAvatarBtn" title="Click to cycle character">
+            <span id="campAvatar" class="camp-avatar" data-sprite="player1" data-icon-size="68"></span>
+          </button>
+          <img class="camp-avatar-crest" src="assets/camp_avatar_crest.webp?v197" alt="" aria-hidden="true">
+          <strong id="campCharacterName" class="camp-banner-name">Wayfarer</strong>
+          <span id="campCharacterRace" class="camp-banner-stat stat-race">Human</span>
+          <span id="campCharacterRole" class="camp-banner-stat stat-role">Balanced</span>
+          <span id="campCharacterHp" class="camp-banner-stat stat-hp">100 HP</span>
+          <span class="camp-banner-stat stat-day" style="color:#ffd54f; font-weight:bold; letter-spacing:1px;">Day <span id="campDay">1</span></span>
+          <span class="camp-banner-stat stat-runs">Run <span id="campRuns">0</span></span>
+          <span id="campProfileWeather" class="camp-banner-stat stat-weather">Clear Skies</span>
+          <span class="camp-banner-stat stat-gold"><strong id="campGoldBanner">120</strong> Gold</span>
+          <button type="button" id="campBuffCompanions" class="camp-buff-hex hex-companions" data-action="open-tab" data-id="tavern" title="Companions & Mounts (Click to open Inn)"><span class="hex-badge" id="hexBadgeCompanions"></span></button>
+          <button type="button" id="campBuffDefense" class="camp-buff-hex hex-defense" data-action="open-tab" data-id="inventory" title="Armor, Gear & Vitality Buffs (Click to open Inventory)"><span class="hex-badge" id="hexBadgeDefense"></span></button>
+          <button type="button" id="campBuffTrinkets" class="camp-buff-hex hex-trinkets" data-action="open-tab" data-id="trinkets" title="Trinkets, Relics & Blessings (Click to open Trinkets)"><span class="hex-badge" id="hexBadgeTrinkets"></span></button>
+          <button type="button" id="campSetPiecesBtn" class="camp-set-pieces-link" data-action="open-tab" data-id="sets" title="Click to open Legendary Sets"><strong id="campSetPiecesCount">0/3</strong> <span>Set Pieces</span></button>
+        </div>
+        <!-- 1 Featured Familiar on Camp Menu -->
+        <div id="campMenuFamiliarCard" class="camp-menu-familiar-card" data-action="open-tab" data-id="tavern" title="Click to open Inn & Companions">
+          <div id="campMenuFamiliarAvatar" class="camp-menu-familiar-avatar" data-sprite="campFox" data-icon-size="52"></div>
+          <div class="camp-menu-familiar-info">
+            <div class="camp-menu-familiar-header">
+              <span id="campMenuFamiliarTag" class="camp-menu-familiar-tag">CAMP GUARDIAN</span>
+              <strong id="campMenuFamiliarName" class="camp-menu-familiar-name">Ember, Little Familiar</strong>
+              <span id="campMenuFamiliarRole" class="camp-menu-familiar-role">Striker</span>
+            </div>
+            <div id="campMenuFamiliarQuote" class="camp-menu-familiar-quote">Runs ahead and dashes through enemies with a fiery strike.</div>
+          </div>
+          <button type="button" class="camp-menu-familiar-btn" data-action="open-tab" data-id="tavern">Inn &rarr;</button>
+        </div>
+        <nav class="camp-tabs" aria-label="Camp services">
+          <button class="camp-tab active" type="button" data-tab="home" title="Camp Overview"><span data-sprite="ui_camp_home" data-icon-size="22"></span><span>Camp</span></button>
+          
+          <button class="camp-tab" type="button" data-tab="inventory" title="Inventory & Equipment"><span data-sprite="ui_camp_inventory" data-icon-size="22"></span><span>Inventory</span></button>
+          <button class="camp-tab" type="button" data-tab="sets" title="Legendary Sets"><span data-sprite="ui_camp_sets" data-icon-size="22"></span><span>Sets</span></button>
+          <button class="camp-tab" type="button" data-tab="shop" title="Camp Merchant"><span data-sprite="ui_camp_store" data-icon-size="22"></span><span>Store</span></button>
+          <button class="camp-tab" type="button" data-tab="tavern" title="Inn & Companions"><span data-sprite="ui_camp_inn" data-icon-size="22"></span><span>Inn</span></button>
+          
+          <button class="camp-tab" type="button" data-tab="trinkets" title="Trinkets & Charms"><span data-sprite="ui_camp_trinkets" data-icon-size="22"></span><span>Trinkets</span></button>
+          <button class="camp-tab" type="button" data-tab="lore" title="Bestiary (Beast Lore)"><span data-sprite="ui_camp_lore" data-icon-size="22"></span><span>Bestiary</span></button>
+          
+          
+        </nav>
+        <div id="campPanel" class="camp-panel" aria-live="polite"></div>
+        <div class="camp-footer"><span>The wilds can wait. For a little while.</span></div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<div id="settingsModal" class="menu-modal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+  <section class="menu-modal-card">
+    <header><div><span class="camp-eyebrow">MAKE IT YOURS</span><h2 id="settingsTitle">Settings</h2></div><button class="modal-close" type="button" data-close-modal="settingsModal" aria-label="Close settings">×</button></header>
+    <label class="setting-slider"><span>Music volume <output id="musicVolumeValue">34%</output></span><input id="musicVolume" type="range" min="0" max="1" step="0.01" value="0.34"></label>
+    <label class="setting-slider"><span>Sound effects <output id="sfxVolumeValue">75%</output></span><input id="sfxVolume" type="range" min="0" max="1" step="0.01" value="0.75"></label>
+    <button id="fullscreenToggle" class="modal-action" type="button">Enter fullscreen</button>
+    <div class="settings-group">
+      <label class="setting-slider" style="margin-bottom:10px;display:flex;flex-direction:column;gap:5px;">
+        <span>Difficulty</span>
+        <select id="setDifficulty" style="background:#172321;color:#f0e5ce;border:1px solid #d9bd7555;padding:5px;border-radius:4px;width:100%;">
+          <option value="0">🛡️ Adventurer (Easy - Recommended for Beginners)</option>
+          <option value="1">⚔️ Survivor (Standard)</option>
+          <option value="2">💀 Nightmare (Hard)</option>
+        </select>
+      </label>
+      <label class="setting-checkbox"><input type="checkbox" id="setShowFps" checked> Show FPS Counter</label>
+      <label class="setting-checkbox"><input type="checkbox" id="setDamageNumbers" checked> Show Damage Numbers</label>
+      <label class="setting-checkbox"><input type="checkbox" id="setScreenShake" checked> Screen Shake</label>
+      <label class="setting-checkbox"><input type="checkbox" id="setWeather" checked> Weather & Lighting</label>
+      <label class="setting-checkbox"><input type="checkbox" id="setManualAim"> Manual Aiming (Mouse)</label>
+      <label class="setting-checkbox"><input type="checkbox" id="setAutoLevel"> Auto-Pick Upgrades</label>
+      <label class="setting-checkbox"><input type="checkbox" id="setMinimap" checked> Show Minimap</label>
+      <label class="setting-checkbox"><input type="checkbox" id="setEnableFog" checked> Fog of War (Darkness)</label>
+    </div>
+    <label class="setting-slider"><span>Camera Zoom <output id="zoomValue">1.0x</output></span><input id="setZoom" type="range" min="0.5" max="2.0" step="0.1" value="1.0"></label>
+    <label class="setting-slider"><span>UI Scale <output id="uiScaleValue">100%</output></span><input id="setUIScale" type="range" min="0.5" max="1.5" step="0.1" value="1.0"></label>
+    
+    <button id="openPerformanceBtn" class="modal-action" type="button" style="background: linear-gradient(135deg, #1b5e20, #2e7d32); color: #fff; font-weight: bold; margin-top: 10px; border: 1px solid #81c784; box-shadow: 0 0 10px rgba(76,175,80,0.4); display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;">
+      <span>⚡</span> <span>Performance & Graphics Settings</span>
+    </button>
+
+    
+    
+
+    <button id="resetDataSettingsBtn" class="modal-action danger-action" type="button">Reset all game data</button>
+    <div class="settings-controls"><strong>Controls</strong><span>Move: WASD or arrow keys</span><span>Collect relic: E • Healing draught: H</span><span>Inventory: I • Pause: Esc • Audio: M</span></div>
+  </section>
+</div>
+
+<div id="performanceModal" class="menu-modal" role="dialog" aria-modal="true" aria-labelledby="perfTitle">
+  <section class="menu-modal-card" style="max-width: 500px;">
+    <header>
+      <div><span class="camp-eyebrow">GRAPHICS & PERFORMANCE</span><h2 id="perfTitle">Performance Settings</h2></div>
+      <button class="modal-close" type="button" data-close-modal="performanceModal" aria-label="Close performance settings">×</button>
+    </header>
+
+    <!-- 1-Click Presets -->
+    <div style="margin-bottom: 14px; padding: 10px; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(217, 189, 117, 0.3); border-radius: 6px;">
+      <div style="font-size: 11px; font-weight: bold; color: #ffd54f; letter-spacing: 0.8px; margin-bottom: 8px; text-transform: uppercase;">⚡ Quick Presets</div>
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;">
+        <button id="presetMaxPerf" type="button" class="perf-preset-btn" style="padding: 7px 4px; font-size: 10px; font-weight: bold; background: #263238; border: 1px solid #78909c; color: #eceff1; border-radius: 4px; cursor: pointer; transition: all 0.2s;">🚀 Max FPS</button>
+        <button id="presetBalanced" type="button" class="perf-preset-btn active" style="padding: 7px 4px; font-size: 10px; font-weight: bold; background: #1b5e20; border: 1px solid #81c784; color: #e8f5e9; border-radius: 4px; cursor: pointer; transition: all 0.2s;">⚖️ Balanced</button>
+        <button id="presetHighQuality" type="button" class="perf-preset-btn" style="padding: 7px 4px; font-size: 10px; font-weight: bold; background: #3e2723; border: 1px solid #d7ccc8; color: #efebe9; border-radius: 4px; cursor: pointer; transition: all 0.2s;">🎨 High Quality</button>
+      </div>
+    </div>
+
+    <!-- Granular Controls -->
+    <div class="settings-group" style="display: flex; flex-direction: column; gap: 10px;">
+      <label class="setting-checkbox" style="display: flex; align-items: center; justify-content: space-between; margin: 0; cursor: pointer;">
+        <span>Show FPS Counter</span>
+        <input type="checkbox" id="setPerfFps" checked style="width: 18px; height: 18px; cursor: pointer;">
+      </label>
+
+      <label class="setting-checkbox" style="display: flex; align-items: center; justify-content: space-between; margin: 0; cursor: pointer; color: #00e5ff;">
+        <span style="font-size: 12px; font-weight: bold;">Show performance stats</span>
+        <input type="checkbox" id="setPerfStatsModal" style="width: 18px; height: 18px; cursor: pointer;">
+      </label>
+
+      <label class="setting-slider" style="display: flex; flex-direction: column; gap: 4px; margin: 0;">
+        <span style="font-size: 12px; color: #f0e8d4;">Damage Numbers Mode</span>
+        <select id="setDamageNumbersMode" style="background:#172321;color:#f0e5ce;border:1px solid #d9bd7555;padding:6px;border-radius:4px;width:100%;">
+          <option value="compressed">Compressed (Grouped & Capped at 36 - Recommended)</option>
+          <option value="full">Full (Every Individual Hit)</option>
+          <option value="off">Off (Fastest)</option>
+        </select>
+      </label>
+
+      <label class="setting-slider" style="display: flex; flex-direction: column; gap: 4px; margin: 0;">
+        <span style="font-size: 12px; color: #f0e8d4;">Particle Density Limit</span>
+        <select id="setParticleLimit" style="background:#172321;color:#f0e5ce;border:1px solid #d9bd7555;padding:6px;border-radius:4px;width:100%;">
+          <option value="60">Low (Max 60 Particles - Laptop / Potato Mode)</option>
+          <option value="150" selected>Medium (Max 150 Particles - Balanced)</option>
+          <option value="300">High (Max 300 Particles - High End)</option>
+        </select>
+      </label>
+
+      <label class="setting-slider" style="display: flex; flex-direction: column; gap: 4px; margin: 0;">
+        <span style="font-size: 12px; color: #f0e8d4;">Shadow Quality</span>
+        <select id="setShadowQuality" style="background:#172321;color:#f0e5ce;border:1px solid #d9bd7555;padding:6px;border-radius:4px;width:100%;">
+          <option value="fast" selected>Fast Simple Shadows (Recommended)</option>
+          <option value="soft">Soft Radial Gradients & Lightning Distortions</option>
+          <option value="off">Off (Maximum Performance)</option>
+        </select>
+      </label>
+
+      <label class="setting-slider" style="display: flex; flex-direction: column; gap: 4px; margin: 0;">
+        <span style="font-size: 12px; color: #f0e8d4;">Weather Atmosphere</span>
+        <select id="setWeatherDensity" style="background:#172321;color:#f0e5ce;border:1px solid #d9bd7555;padding:6px;border-radius:4px;width:100%;">
+          <option value="low" selected>Low Density (Optimized)</option>
+          <option value="full">Full Atmospheric Density</option>
+          <option value="off">Off (Clear Skies Only)</option>
+        </select>
+      </label>
+
+      <label class="setting-checkbox" style="display: flex; align-items: center; justify-content: space-between; margin: 0; cursor: pointer;">
+        <span>Aggressive XP Gem Clustering (Cap max ground gems)</span>
+        <input type="checkbox" id="setGemClustering" checked style="width: 18px; height: 18px; cursor: pointer;">
+      </label>
+
+      <label class="setting-checkbox" style="display: flex; align-items: center; justify-content: space-between; margin: 0; cursor: pointer;">
+        <span>Smart Offscreen Updates (Skip distant entity steering)</span>
+        <input type="checkbox" id="setSmartOffscreen" checked style="width: 18px; height: 18px; cursor: pointer;">
+      </label>
+
+      <label class="setting-checkbox" style="display: flex; align-items: center; justify-content: space-between; margin: 0; cursor: pointer;">
+        <span>Fog of War (Unexplored Darkness)</span>
+        <input type="checkbox" id="setEnableFogPerf" checked style="width: 18px; height: 18px; cursor: pointer;">
+      </label>
+    </div>
+
+    <button class="modal-action" type="button" data-close-modal="performanceModal" style="margin-top: 14px; background: #2e7d32; color: #fff;">Done</button>
+  </section>
+</div>
+<div id="helpModal" class="menu-modal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <section class="menu-modal-card help-modal-card">
+    <header>
+      <div>
+        <span class="camp-eyebrow">FIELD GUIDE & COMPENDIUM</span>
+        <h2 id="helpTitle">PIXELVIVOR â€” The Frontier</h2>
+      </div>
+      <button class="modal-close" type="button" data-close-modal="helpModal" aria-label="Close help">×</button>
+    </header>
+
+    <blockquote class="help-intro-quote">
+      <strong>Welcome to the Frontier.</strong><br>
+      You are a Guardian of the Gate. The world is broken, the Void is awakening, and the ancient seals are fading.<br>
+      Survive the wilds, uncover the hidden secrets, and prepare for the final confrontation.
+    </blockquote>
+
+    <section class="help-section">
+      <h3>1. Getting Started (Your First Run)</h3>
+      <ol class="help-list">
+        <li><strong>Choose Your Hero</strong>: Each of the 7 heroes has a unique starting weapon, stats, and home biome.</li>
+        <li><strong>Set Out</strong>: Press the <strong>"Set Out"</strong> button in the Camp to begin a run.</li>
+        <li><strong>Move</strong>: Use <strong>WASD</strong> or <strong>Arrow Keys</strong> to move.</li>
+        <li><strong>Fight</strong>: Your weapons attack <strong>automatically</strong>. You just need to position yourself.</li>
+        <li><strong>Level Up</strong>: Collect <strong>XP Gems</strong> from defeated enemies. When the XP bar fills, you will be offered a choice of 3 upgrades.</li>
+        <li><strong>Survive</strong>: The longer you survive, the stronger the enemies become. The run ends when you die.</li>
+      </ol>
+    </section>
+
+    <section class="help-section">
+      <h3>2. The Camp (Your Home Base)</h3>
+      <p>The Camp is your permanent progression hub. Here you can:</p>
+      <ul class="help-list">
+        <li><strong>Character</strong>: Choose your hero.</li>
+        <li><strong>Quest Board</strong>: View daily contracts, story chains, and bounties.</li>
+        <li><strong>Inventory</strong>: Manage your gear, relics, trinkets, and materials.</li>
+        <li><strong>Sets</strong>: Equip Legendary Sets.</li>
+        <li><strong>Store</strong>: Buy new weapons and tools with Gold.</li>
+        <li><strong>Inn</strong>: Hire companions and familiars.</li>
+        <li><strong>Stable</strong>: Buy and equip mounts.</li>
+        <li><strong>Trinkets</strong>: Equip up to 3 passive trinkets.</li>
+        <li><strong>Bestiary</strong>: View all the enemies you have encountered.</li>
+        <li><strong>Lore</strong>: Read the stories and secrets you have discovered.</li>
+        <li><strong>Trophies</strong>: View your achievements and cosmetics.</li>
+      </ul>
+      <p class="help-tip"><strong>Quick Start</strong>: Use the <strong>"Quick Start"</strong> button to instantly begin a run with your last loadout.</p>
+    </section>
+
+    <section class="help-section">
+      <h3>3. Combat & Weapons</h3>
+      <ul class="help-list">
+        <li><strong>Core Weapons</strong>: You can equip up to 4 weapons. Each weapon can be upgraded up to <strong>Level 8</strong>.</li>
+        <li><strong>Evolutions</strong>: If you have a Level 8 weapon and its required passive item, it will evolve into a <strong>Legendary Evolution</strong> (e.g., <em>Magic Wand L8 + Ring of Power L5 = Arcane Barrage</em>).</li>
+        <li><strong>Upgrade Cards</strong>: Every time you level up, you will be offered 3 random upgrade cards. These include new weapons, stat boosts, and powerful <strong>Keystones</strong> that change how you play.</li>
+        <li><strong>Horde Events</strong>: Every 70-105 seconds, a tactical horde will spawn. Watch for the <strong>warning banner</strong> and prepare to dodge.</li>
+      </ul>
+    </section>
+
+    <section class="help-section">
+      <h3>4. The World & Biomes</h3>
+      <ul class="help-list">
+        <li><strong>13 Overworld Biomes</strong>: Plains, Forest, Magic Forest, Desert, Snowfield, Swamp, Volcano, Badlands, Crystal Wastes, Deadlands, Fungal Wastes, and more.</li>
+        <li><strong>Pocket Dimensions</strong>: The world is home to several hidden dimensions:
+          <ul>
+            <li><strong>The Abyss</strong>: A submerged realm accessed via the Sunken Shrine in the Swamp. Home of the Abyssal Kraken.</li>
+            <li><strong>The Dreamscape</strong>: A surreal nightmare accessed by sleeping 3 times in a row. Features a unique Dream Coin economy.</li>
+            <li><strong>The Chicken Dimension</strong>: A secret, chaotic realm accessed by trading a Rare Relic with the Mad Poultry Farmer in the Plains.</li>
+            <li><strong>The Mountain Biomes</strong>: 5 colossal mountain formations scattered across the world. Each contains a unique centerpiece tree and is guarded by unique mountain mobs.</li>
+            <li><strong>The Underworld</strong>: A subterranean realm of caves and materials.</li>
+          </ul>
+        </li>
+        <li><strong>Dynamic Weather</strong>: Rain, Snow, Storms, and Floods change the environment. Lightning can strike, and floods can raise the water level.</li>
+      </ul>
+    </section>
+
+    <section class="help-section">
+      <h3>5. World Secrets (The Lore)</h3>
+      <p>The world is full of hidden secrets. The UI <strong>will not</strong> tell you where they are. You must <strong>discover</strong> them.</p>
+      <ul class="help-list">
+        <li><strong>The Sunken Temple (Swamp)</strong>: Wait for <strong>Night + Flood</strong>. Find the Sunken Shrine.</li>
+        <li><strong>The Frozen Heart Ritual (Snowfield)</strong>: Wait for a <strong>Storm</strong>. Have the <strong>Frozen Core</strong> from the Ice Titan. Find the Stone Circle.</li>
+        <li><strong>The Crystal Cave (Crystal Wastes)</strong>: Wait for <strong>Night</strong>. Have 10 <strong>Crystal Shards</strong>. Find the Crystal Cave entrance.</li>
+        <li><strong>The Mad Alchemist's Secret (Fungal Wastes)</strong>: Wait for a <strong>Blood Moon</strong>. Have 3 <strong>Poisonous Mushrooms</strong>. Find the Abandoned House.</li>
+        <li><strong>The Void Portal (Magic Forest)</strong>: Have the <strong>Philosopher's Stone</strong> and 5 <strong>Void Essences</strong>. Find the Void Altar.</li>
+      </ul>
+      <p class="help-tip"><strong>The Chain Reaction</strong>: Each secret unlocks the next. You <strong>cannot</strong> skip ahead.</p>
+    </section>
+
+    <section class="help-section">
+      <h3>6. Economy & Materials</h3>
+      <ul class="help-list">
+        <li><strong>Gold</strong>: The standard currency. Used to buy items in the Camp.</li>
+        <li><strong>Chicken Coins</strong>: Earned in the Chicken Dimension. Used to buy XP from the Mad Poultry Farmer.</li>
+        <li><strong>Dream Coins</strong>: Earned in the Dreamscape. Used to buy weapons and upgrades from the Dream Merchant.</li>
+        <li><strong>Materials</strong>: Dropped by bosses and elites. Used to craft permanent upgrades in the Camp (e.g., Ancient Bark, Frozen Core, Void Essence).</li>
+        <li><strong>Void Essences</strong>: Required to open the Void Portal. You need 5. You can get them from the 5 World Secrets and from the Cave Boss.</li>
+      </ul>
+    </section>
+
+    <section class="help-section">
+      <h3>7. Controls</h3>
+      <div class="help-table-wrap">
+        <table class="help-table">
+          <thead>
+            <tr><th>Action</th><th>Key</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Move</td><td><kbd>WASD</kbd> / <kbd>Arrow Keys</kbd></td></tr>
+            <tr><td>Dash</td><td><kbd>Space</kbd></td></tr>
+            <tr><td>Interact (NPC, Shrine, Note)</td><td><kbd>E</kbd></td></tr>
+            <tr><td>Open Inventory</td><td><kbd>I</kbd></td></tr>
+            <tr><td>Pause / Return to Camp</td><td><kbd>Esc</kbd></td></tr>
+            <tr><td>Toggle Minimap Zoom</td><td><kbd>Mouse Wheel</kbd> (over minimap)</td></tr>
+            <tr><td>Pan Minimap</td><td><kbd>Click & Drag</kbd> (when zoomed in)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="help-section">
+      <h3>8. Tips for New Players</h3>
+      <ol class="help-list">
+        <li><strong>Don't stand still</strong>: Movement is your best defense.</li>
+        <li><strong>Collect XP Gems</strong>: They are the key to getting stronger.</li>
+        <li><strong>Try different weapons</strong>: Each weapon has a unique playstyle.</li>
+        <li><strong>Look for the warning banner</strong>: A horde is coming. Get ready to dodge.</li>
+        <li><strong>Explore the world</strong>: The best secrets are hidden in plain sight.</li>
+        <li><strong>Talk to NPCs</strong>: They often have clues about the world.</li>
+        <li><strong>Don't be afraid to die</strong>: Every run makes you stronger in the Camp.</li>
+      </ol>
+    </section>
+
+    <section class="help-section">
+      <h3>9. Testing & Dev Commands (For Playtesting)</h3>
+      <p>If you are helping playtest the game, you can access the <strong>Dev Settings</strong> in the Pause Menu:</p>
+      <ul class="help-list">
+        <li><strong>Fast-Forward</strong>: Skip 5 minutes of time.</li>
+        <li><strong>Teleport to Mountain Biomes</strong>: Jump to any of the 5 mountain formations.</li>
+        <li><strong>Teleport to Abyss / Dreamscape / Chicken Dimension</strong>: Jump directly to the pocket dimensions.</li>
+        <li><strong>Spawn Mountain Biome Mobs</strong>: Instantly spawn the unique mobs for any mountain.</li>
+      </ul>
+    </section>
+
+    <div class="help-closing">
+      <em>Good luck, Guardian. The Frontier awaits.</em>
+    </div>
+
+    <button class="modal-action" type="button" data-close-modal="helpModal">Back to Camp</button>
+  </section>
+</div><button class="modal-close" type="button" data-close-modal="helpModal" aria-label="Close help">×</button></header>
+    <p>Choose a character, prepare your weapons and companions at camp, then set out into the wilds.</p>
+    <div class="settings-controls"><span>Move with WASD or the arrow keys. Weapons attack automatically.</span><span>Explore to reveal the map, collect XP, and grow stronger.</span><span>Carry one relic at a time back to camp to keep it. Dying before you return loses the carried relic.</span><span>Press E near relics, H to heal, I to manage relics, and Esc to pause.</span></div>
+    <button class="modal-action" type="button" data-close-modal="helpModal">Ready</button>
+  </section>
+</div>
+<div id="creditsModal" class="menu-modal" role="dialog" aria-modal="true" aria-labelledby="menuCreditsTitle">
+  <section class="menu-modal-card credits-modal-card">
+    <header><div><span class="camp-eyebrow">PIXELVIVOR</span><h2 id="menuCreditsTitle">Credits</h2></div><button class="modal-close" type="button" data-close-modal="creditsModal" aria-label="Close credits">×</button></header>
+    <div class="credit-row"><span>CREATED BY</span><strong>N.Angelosoulis</strong></div>
+    <div class="credit-row"><span>MUSIC DEVELOPER</span><strong>S.Angelosoulis</strong></div>
+    <div class="credit-row"><span>MUSHROOM SPRITES</span><strong>Peter Field</strong></div>
+    <div class="credit-row"><span>LICENSE</span><strong>Royalty-free (commercial OK)</strong></div>
+    <div class="credit-row"><span>ASSET PACK</span><strong>peterfield2006.itch.io/mushroom-sprite-pack</strong></div>
+    <button class="modal-action" type="button" data-close-modal="creditsModal">Back to camp</button>
+  </section>
+</div>
+
+<div id="trinketModal" class="menu-modal" role="dialog" aria-modal="true" aria-labelledby="trinketTitle">
+  <section class="menu-modal-card">
+    <header class="menu-modal-header"><h2 id="trinketTitle">Select Trinket</h2><button class="menu-modal-close" type="button" aria-label="Close" data-close-modal="trinketModal">&times;</button></header>
+    <div id="trinketList" style="display:flex;flex-direction:column;gap:10px;margin-top:15px;max-height:400px;overflow-y:auto;"></div>
+  </section>
+</div>
+
+<div id="npcModal" class="menu-modal" role="dialog" aria-modal="true" aria-labelledby="npcModalTitle">
+  <section class="menu-modal-card npc-modal-card">
+    <header class="npc-modal-header">
+      <div class="npc-header-info">
+        <div id="npcPortraitContainer" class="npc-portrait-container"></div>
+        <div>
+          <span class="camp-eyebrow" id="npcModalRole">ENCOUNTER</span>
+          <h2 id="npcModalTitle">Stranger</h2>
+        </div>
+      </div>
+      <button class="modal-close" type="button" id="npcModalClose" aria-label="Close dialogue">×</button>
+    </header>
+    <div class="npc-dialogue-body">
+      <div class="npc-dialogue-speech">
+        <p id="npcDialogueText" class="npc-dialogue-text"></p>
+      </div>
+      <div id="npcDynamicContent" class="npc-dynamic-content"></div>
+    </div>
+    <footer class="npc-modal-footer">
+      <div class="npc-wallet-info">
+        <span data-sprite="rpg_coin_gold" data-icon-size="28"></span>
+        <span id="npcPlayerGold">0</span> GOLD
+      </div>
+      <button class="modal-action npc-leave-btn" type="button" id="npcLeaveBtn">Leave</button>
+    </footer>
+  </section>
+</div>
+
+<div id="pauseMenu" role="dialog" aria-modal="true" aria-labelledby="pauseTitle">
+  <div class="pause-card">
+    <h2 id="pauseTitle" class="sr-only">The frontier can wait. (Paused)</h2>
+    <span id="pausePlayerIcon" style="display:none"></span>
+    <div class="pause-actions">
+      <button id="resumeButton" class="pause-btn pause-btn-resume" type="button" aria-label="Back to the wilds" title="Resume expedition (Esc)"></button>
+      <div class="pause-btn-wrap">
+        <button id="returnToCampPause" class="pause-btn pause-btn-camp" type="button" aria-label="Return to camp" title="Return safely to camp and bank your carried relic."></button>
+        <span id="campReturnLabel" class="pause-lock-badge"></span>
+      </div>
+      <button id="pauseSettings" class="pause-btn pause-btn-settings" type="button" aria-label="Settings" title="Game Settings"></button>
+    </div>
+  </div>
+</div>
+
+<canvas id="c"></canvas>
+<div id="gameScreenBorder" aria-hidden="true"></div>
+
+<div id="hudContainer">
+  <div id="hud">
+    <div class="hud-hp-row">
+      <img src="assets/ui_hud_potion.webp" class="hud-icon-potion" alt="Health" />
+      <div id="pixelHpContainer">
+        <div id="hpTrail" style="width:100%"></div>
+        <div id="hpBar" style="width:100%"></div>
+        <div id="hpFrame"></div>
+        <span id="hpText" class="hud-bar-text">100 / 100</span>
+      </div>
+    </div>
+    <div class="hud-xp-row">
+      <div class="hud-lvl-badge">
+        <img src="assets/ui_hud_orb.webp" class="hud-icon-orb" alt="Level" />
+        <span class="hud-lvl-label">Lv <strong id="lvlText">1</strong></span>
+      </div>
+      <span id="diffHudBadge" style="display:none;align-items:center;padding:2px 7px;background:rgba(46,125,50,0.88);border:1px solid #81c784;border-radius:10px;font-size:10px;font-weight:bold;color:#e8f5e9;box-shadow:0 0 8px rgba(76,175,80,0.4);margin-left:6px;">🛡️ ADVENTURER</span>
+      <div class="hud-xp-container">
+        <div class="bar"><div id="xpBar" style="width:0%"></div></div>
+        <div class="hud-xp-frame"></div>
+      </div>
+    </div>
+    <div class="hud-stats-row">
+      <div class="hud-stat-item hud-stat-kills">
+        <img src="assets/ui_hud_demon.webp" class="hud-icon-stat" alt="Kills" />
+        <span id="killText">0</span>
+      </div>
+      <div class="hud-stat-item hud-stat-gold">
+        <img src="assets/ui_hud_coin.webp" class="hud-icon-stat" alt="Gold" />
+        <span id="runGoldText">120</span>
+      </div>
+    </div>
+    <div id="status"></div>
+  </div>
+  <aside id="minimapPanel" aria-label="Explored world map">
+    <div class="minimap-heading">FIELD MAP</div>
+    <canvas id="minimap" width="180" height="180" aria-label="Nearby explored terrain, relics, items, and bosses"></canvas>
+    <div id="minimapControls" class="minimap-controls" aria-label="Minimap Controls">
+      <button id="minimapZoomIn" type="button" class="minimap-btn" title="Zoom In (+)">+</button>
+      <button id="minimapZoomOut" type="button" class="minimap-btn" title="Zoom Out (-)">-</button>
+      <button id="minimapRecenter" type="button" class="minimap-btn" title="Recenter (Reset)" style="font-weight:bold; font-size:11px;">R</button>
+      <span id="minimapZoomBadge" class="minimap-zoom-badge">1.0x</span>
+    </div>
+    <div class="minimap-legend"><span><i class="map-player-key"></i>You</span><span><i class="map-relic-key"></i>Relic</span><span><i class="map-npc-key"></i>NPC</span><span><i class="map-item-key"></i>Item</span><span><i class="map-boss-key"></i>Boss</span></div>
+  </aside>
+  <button id="hudReturnToCampBtn" type="button" class="hud-return-camp-btn" onclick="if(window.isInDream){window.tryToAwake&&window.tryToAwake();}else{window.returnToCamp&&window.returnToCamp();}" title="Return safely to camp and bank your carried relic.">
+    <span data-sprite="ui_camp_home" data-icon-size="18"></span>
+    <span id="hudCampReturnLabel">Return to Camp</span>
+  </button>
+</div>
+
+<div id="rightContainer">
+  <div id="fpsRow" style="position: absolute; right: calc(100% + 8px); top: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; z-index: 26; pointer-events: none;">
+    <div id="fpsCounter" class="hud-fps-counter fps-good" style="position: static; pointer-events: auto;" title="Current FPS. Click to open Performance Settings.">60 FPS</div>
+    <div id="debugPerfOverlay" class="hud-fps-counter fps-mid" style="display: none; position: static; min-width: auto; height: 24px; padding: 0 8px; font-family: monospace; font-size: 11px; letter-spacing: 0.5px; pointer-events: auto;" title="Dev Performance Stats: Update ms | Render ms">Up: 0.0ms | Ren: 0.0ms</div>
+    <div id="debugDrawOverlay" class="hud-fps-counter fps-mid" style="display: none; position: static; min-width: auto; height: auto; min-height: 20px; padding: 2px 8px; font-family: monospace; font-size: 10px; line-height: 1.2; letter-spacing: 0.3px; pointer-events: auto; white-space: nowrap;" title="Dev Draw Calls & Pixel Areas">Img: 0 calls (0.0 Mpx)</div>
+  </div>
+  <div id="dayCounter">DAY 1</div>
+  <div id="timer">
+    <div id="timerHeader">
+      <span id="timerText">00:00</span>
+      <span id="hudMoonIcon">ðŸŒ™</span>
+    </div>
+    <div id="clock"></div>
+    <div id="weather"></div>
+  </div>
+  <div id="biome"></div>
+  <aside id="conditionsPanel" aria-live="polite" aria-label="Active terrain and survival conditions">
+    <div class="conditions-heading" onclick="document.getElementById('conditionEntries').classList.toggle('collapsed')">FIELD CONDITIONS</div>
+    <div id="conditionEntries"></div>
+  </aside>
+</div>
+
+<div id="awakeningMeterContainer" style="display: none; position: fixed; top: 62px; left: 50%; transform: translateX(-50%); z-index: 350; flex-direction: column; align-items: center; pointer-events: none;">
+  <div style="display: flex; align-items: center; justify-content: space-between; width: 280px; margin-bottom: 3px;">
+    <span style="font-family: 'Cinzel', Georgia, serif; font-size: 11px; font-weight: 800; letter-spacing: 1.5px; color: #00e5ff; text-transform: uppercase; text-shadow: 0 0 8px rgba(0,229,255,0.7), 0 2px 4px #000;">
+      Awakening
+    </span>
+    <span id="awakeningPct" style="font-family: 'Cinzel', monospace; font-size: 11px; font-weight: 800; color: #e0f7fa; text-shadow: 0 0 6px #00e5ff;">0%</span>
+  </div>
+  <div style="width: 280px; height: 10px; background: rgba(10,5,20,0.85); border: 1.5px solid #7b1fa2; border-radius: 6px; overflow: hidden; box-shadow: 0 0 10px rgba(123,31,162,0.6), inset 0 2px 4px rgba(0,0,0,0.9);">
+    <div id="awakeningBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #7b1fa2, #00e5ff); box-shadow: 0 0 12px #00e5ff; transition: width 0.15s ease-out;"></div>
+  </div>
+  <div style="display: flex; align-items: center; justify-content: space-between; width: 280px; margin-top: 3px; pointer-events: auto;">
+    <span style="font-family: 'Cinzel', Georgia, serif; font-size: 9px; font-weight: 600; color: #b2ebf2; letter-spacing: 0.5px; text-shadow: 0 1px 2px #000;">Kill enemies to wake up.</span>
+    <div id="dreamCoinsHUD" style="display: flex; align-items: center; gap: 4px; font-family: 'Cinzel', monospace; font-size: 11px; font-weight: 800; color: #ffd700; text-shadow: 0 0 6px rgba(255,215,0,0.6);">
+      <span data-sprite="dream_coin" data-icon-size="16"></span>
+      <span id="dreamCoinsCount">0</span>
+    </div>
+  </div>
+  <div id="dreamRelicSlots" style="display: flex; gap: 5px; margin-top: 5px; pointer-events: auto;"></div>
+</div>
+
+<div id="dreamShopModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 950; background: rgba(10,5,20,0.85); backdrop-filter: blur(4px); align-items: center; justify-content: center;">
+  <div style="background: linear-gradient(180deg, #1f1135 0%, #0d0617 100%); border: 2px solid #7b1fa2; border-radius: 12px; box-shadow: 0 0 30px rgba(123,31,162,0.8), 0 0 12px #00e5ff; width: 560px; max-width: 92vw; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden; color: #f3e5f5; font-family: 'Cinzel', Georgia, serif;">
+    <header style="padding: 12px 18px; border-bottom: 1px solid rgba(123,31,162,0.4); display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.35);">
+      <div>
+        <h2 style="margin: 0; font-size: 17px; color: #ba68c8; letter-spacing: 1.5px; text-shadow: 0 0 8px rgba(186,104,200,0.6);">ðŸŒ™ DREAM MERCHANT</h2>
+        <span style="font-size: 11px; color: #b2ebf2; font-family: sans-serif;">Exchange Dream Coins for weapons & enhancements</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 14px;">
+        <div style="display: flex; align-items: center; gap: 5px; font-weight: 800; font-size: 14px; color: #ffd700; text-shadow: 0 0 8px rgba(255,215,0,0.6);">
+          <span data-sprite="dream_coin" data-icon-size="20"></span>
+          <span id="shopDreamCoinsVal">0</span>
+        </div>
+        <button id="closeDreamShopBtn" type="button" onclick="window.closeDreamShopModal()" style="background: rgba(123,31,162,0.3); border: 1px solid #ba68c8; border-radius: 6px; color: #fff; font-size: 18px; line-height: 1; cursor: pointer; padding: 4px 10px; pointer-events: auto; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,0,80,0.6)'" onmouseout="this.style.background='rgba(123,31,162,0.3)'">âœ•</button>
+      </div>
+    </header>
+    <div id="dreamShopContent" style="padding: 14px 18px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px;">
+      <div>
+        <h3 style="margin: 0 0 8px 0; font-size: 12px; color: #00e5ff; letter-spacing: 1px;">AVAILABLE WEAPONS (5 RANDOM)</h3>
+        <div id="shopWeaponsList" style="display: flex; flex-direction: column; gap: 6px;"></div>
+      </div>
+      <div>
+        <h3 style="margin: 0 0 8px 0; font-size: 12px; color: #00e5ff; letter-spacing: 1px;">WEAPON UPGRADES (5 RANDOM)</h3>
+        <div id="shopUpgradesList" style="display: flex; flex-direction: column; gap: 6px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="dreamTransitionOverlay" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 9999; opacity: 0; transition: opacity 0.9s ease; background: #000;"></div>
+<div id="questTracker" aria-live="polite"><strong>RELIC HUNT</strong><span id="questObjective">Explore to find an ancient cache</span><button id="inventoryToggle" type="button" aria-label="Open Inventory"><span id="inventoryCount">0</span></button></div>
+<section id="inventoryPanel" role="dialog" aria-label="Inventory"><header><h2>Relic Inventory</h2><button id="inventoryClose" type="button" aria-label="Close inventory"></button></header><div id="carriedRelicStatus"></div><div id="equippedRelics"></div><div id="inventoryEntries"></div></section>
+<div id="topNotifications"><div id="achievements" aria-live="polite"></div><div id="relicToasts" aria-live="polite"></div></div>
+<div id="weapons"></div>
+<div id="conchQuickSlot" style="display:none;"></div>
+<div id="equip"></div>
+<div id="achievementsPanel" onclick="toggleAchList()"><span data-sprite="rpg_shield_gold" data-icon-size="28"></span> <span id="achCount">0</span>/<span id="achTotal">12</span></div>
+<div id="achList"></div>
+
+<div id="bossIntro">
+  <div class="label"><span data-sprite="rpg_sword_iron" data-icon-size="28"></span> BOSS</div>
+  <div class="name" id="bossName">BLOOD LORD</div>
+  <div class="sub" id="bossSub">The Plains Devourer</div>
+</div>
+
+<div id="levelup">
+  <div class="levelup-sunburst" aria-hidden="true"></div>
+  <div class="levelup-particles" id="levelupParticles" aria-hidden="true"></div>
+  <div class="levelup-header">
+    <div class="levelup-ribbon-tag" id="levelupCelebrationTag">CONGRATULATIONS!</div>
+    <h1 class="levelup-title">LEVEL UP!</h1>
+    <div class="levelup-subtitle" id="levelupSubtitle">CHOOSE YOUR UPGRADE</div>
+  </div>
+  <div id="levelupActions" class="levelup-actions"></div>
+  <div class="cards" id="cardContainer"></div>
+</div>
+<div id="gameover">
+  <div class="go-modal-shell">
+    <div class="go-banner-wrap">
+      <div class="go-skull-crest"><span data-sprite="rpg_demon_skull" data-icon-size="52"></span></div>
+      <div class="go-ribbon go-ribbon-left"></div>
+      <div class="go-ribbon go-ribbon-right"></div>
+      <div class="go-banner-plaque">
+        <h1>GAME OVER</h1>
+      </div>
+    </div>
+
+    <div id="goStats" class="go-stats-bar"></div>
+
+    <div class="go-actions-row">
+      <button id="returnToCamp" class="go-btn go-btn-camp" type="button">
+        <span class="go-btn-icon" data-sprite="ui_camp_home" data-icon-size="28"></span>
+        <span>Return to Camp</span>
+      </button>
+      <button id="exitToMainMenuBtn" class="go-btn go-btn-menu" type="button">
+        <span class="go-btn-icon" data-sprite="rpg_scroll" data-icon-size="28"></span>
+        <span>Main Menu</span>
+      </button>
+    </div>
+
+    <div class="go-bottom-ornament" aria-hidden="true">
+      <span class="go-ornament-line"></span>
+      <span class="go-ornament-gem"></span>
+      <span class="go-ornament-line"></span>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+      const btnStart = document.getElementById("btnStartGame");
+      const startScreen = document.getElementById("startScreen");
+      const loadingScreen = document.getElementById("loadingScreen");
+      const loadingBar = document.getElementById("loadingBar");
+      const loadingTip = document.getElementById("loadingTip");
+      
+      const LOADING_TIPS = [
+        "Your weapons strike automatically. Focus on dodging and positioning.",
+        "Use Dash with spacebar to get away from circled hordes.",
+        "Standing still with the Anchor ability grants a massive +50% damage boost.",
+        "Enemies drop XP orbs. Move close to them to absorb their power.",
+        "Don't get surrounded. Use the terrain to funnel enemies into a line.",
+        "The Blood Moon brings powerful Vampires. Stay near the light.",
+        "Return to Camp to spend your Gold on permanent upgrades before your next run.",
+        "Legendary Sets grant massive bonuses. Collect all 3 pieces to unlock their true power.",
+        "Defeat Bosses to harvest rare materials for permanent stat boosts.",
+        "Check the Quest Board in Camp daily for fresh bounties and relics.",
+        "The wilds hold many secrets. Look for ancient shrines buried in the mud.",
+        "Some doors only open when the weather is right and the moon is high.",
+        "Talk to the Wandering Merchant. His wares can change the fate of a run.",
+        "If the flood rises, seek higher ground... or a shrine hidden beneath the waves.",
+        "The Depths are pitch black. Bring a Torch or a fire weapon to survive.",
+        "Beware the Abyss. Only those with the Abyssal Key may enter... and return.",
+        "Equip the Mask of Calm to explore dangerous biomes in absolute peace. But be warned: it disables your attacks.",
+        "Tip: Dying is a core mechanic. Try to do it less often.",
+        "Tip: The wolves are not friendly. Do not pet them.",
+        "Tip: If you see a giant tentacle, you are already too close."
+      ];
+
+      function getRandomTip() {
+        const item = LOADING_TIPS[Math.floor(Math.random() * LOADING_TIPS.length)];
+        return item.startsWith("Tip:") ? item : `"${item}"`;
+      }
+
+      const skip = localStorage.getItem("pixelvivor.skipStartMenu");
+      const skipTime = localStorage.getItem("pixelvivor.skipStartMenuTime");
+      const now = Date.now();
+      localStorage.removeItem("pixelvivor.skipStartMenu");
+      localStorage.removeItem("pixelvivor.skipStartMenuTime");
+      if (skip === "true" && skipTime && (now - parseInt(skipTime, 10)) < 30000) {
+          const startVid = document.getElementById("startVideo");
+          if (startVid) { try { startVid.pause(); } catch(e) {} }
+          startScreen.style.display = "none";
+          return;
+      }
+
+      /* =====================================================================
+       * THE CHRONICLES OF ELD — GRIMDARK STORY PROLOGUE CONTROLLER
+       * ===================================================================== */
+      const STORY_ACTS = [
+        {
+          badge: "ACT I OF IV",
+          location: "THE FIVE MEGA-TREES OF ELD",
+          title: "The Prisons of Flesh",
+          musicSrc: "music/prologue/Ancient_Ruin1_4.mp3",
+          speechSrc: "music/prologue/act1.mp3",
+          speechDurationSec: 46.99,
+          speechIncludesEpigraph: true,
+          epigraphPhrases: [
+            "\"The old myths whisper that the Five Great Trees",
+            "are divine fonts of pure life.",
+            "It is a lie.\""
+          ],
+          paragraphPhrases: [
+            [
+              "At the dawn of creation,",
+              "the realm of Eld was ruled by five voracious abominations—",
+              "<strong>The Primeval Titans.</strong>",
+              "Unable to slay them, the Ancient Guardians chose a horrific solution:",
+              "they drove colossal living roots directly through the beasts' beating hearts",
+              "and pinned their flesh to the bedrock."
+            ],
+            [
+              "For millennia, the Great Trees have fed upon the ichor and dormant marrow",
+              "of these imprisoned titans—",
+              "and upon the <em>recycled souls of every mortal who perishes in this world.</em>",
+              "If a Great Tree withers or burns,",
+              "its bound abomination awakens."
+            ]
+          ],
+          backdrop: "assets/sunken_shrine.webp",
+          tint: "radial-gradient(circle at 50% 35%, rgba(28, 78, 56, 0.25) 0%, rgba(72, 12, 22, 0.55) 60%, rgba(5, 7, 10, 0.94) 100%)",
+          particleColors: ["#d9534f", "#5cb85c", "#ffd86b", "#94d4a8"]
+        },
+        {
+          badge: "ACT II OF IV",
+          location: "BEYOND THE ABYSSAL RIFT",
+          title: "Aethelgard & The Final Quiet",
+          musicSrc: "music/prologue/Ancient_Ruin2.mp3",
+          speechSrc: "music/prologue/act2.mp3",
+          speechDurationSec: 39.39,
+          speechIncludesEpigraph: false,
+          epigraphPhrases: [
+            "\"The Void God is no alien conqueror from a distant star.",
+            "He was the first of us.\""
+          ],
+          paragraphPhrases: [
+            [
+              "Long ago, <strong>Aethelgard</strong>—",
+              "founder and Grand Commander of the Order of Guardians—",
+              "breached the Deep Void to uncover the true nature of reality.",
+              "What he witnessed shattered his sanity:",
+              "Eld is an endless engine of torment where no soul is ever granted rest."
+            ],
+            [
+              "Convinced that the only true mercy for all living beings",
+              "was <strong>Absolute Annihilation</strong>,",
+              "Aethelgard relinquished his humanity and ascended as the <em>Void God</em>.",
+              "His crusade is born not of petty malice,",
+              "but of a cosmic desire to grant Eld permanent euthanasia—<strong>The Final Quiet</strong>."
+            ]
+          ],
+          backdrop: "assets/camp_void.webp",
+          tint: "radial-gradient(circle at 50% 35%, rgba(92, 42, 148, 0.32) 0%, rgba(20, 12, 42, 0.68) 62%, rgba(4, 4, 10, 0.95) 100%)",
+          particleColors: ["#b388ff", "#7c4dff", "#e040fb", "#82b1ff"]
+        },
+        {
+          badge: "ACT III OF IV",
+          location: "THE FIVE MOUNTAIN SANCTUARIES",
+          title: "The Sin of the Blood Altar",
+          musicSrc: "music/prologue/Ancient_Ruin3.mp3",
+          speechSrc: "music/prologue/act3.mp3",
+          speechDurationSec: 31.32,
+          speechIncludesEpigraph: false,
+          epigraphPhrases: [
+            "\"Every elder at camp carries the crushing weight",
+            "of ancestral blood upon their hands.\""
+          ],
+          paragraphPhrases: [
+            [
+              "The Guardians of old were far from spotless heroes.",
+              "To reinforce the failing seals after the First Cataclysm,",
+              "they slaughtered thousands of innocent villagers",
+              "upon the <strong>Blood Altar</strong>."
+            ],
+            [
+              "Today, that ancient blood sacrifice has run dry.",
+              "Across the five Mountain Sanctuaries—",
+              "from the <em>Frostpeak Hollow</em> of Commander Alden to Morvath's <em>Dread Crags</em>—",
+              "the seals are fracturing, the Mad Alchemist brews forbidden oblivion,",
+              "and the Void bleeds into the frontier."
+            ]
+          ],
+          backdrop: "assets/abyss_camp.webp",
+          tint: "radial-gradient(circle at 50% 35%, rgba(155, 34, 42, 0.30) 0%, rgba(32, 18, 24, 0.70) 62%, rgba(6, 6, 10, 0.95) 100%)",
+          particleColors: ["#ff5252", "#ff8a80", "#cfd8dc", "#d9bd75"]
+        },
+        {
+          badge: "ACT IV OF IV",
+          location: "VALLEY CAMP OUTPOST",
+          title: "The Wayfarer's Burden",
+          musicSrc: "music/prologue/Ancient_Ruin1_4.mp3",
+          speechSrc: "music/prologue/act4.mp3",
+          speechDurationSec: 31.79,
+          speechIncludesEpigraph: false,
+          epigraphPhrases: [
+            "\"In one possible future, Selene foresaw you",
+            "ascending as the next Void Sovereign.\""
+          ],
+          paragraphPhrases: [
+            [
+              "You awaken at the edge of <strong>Valley Camp</strong>,",
+              "where fallen commanders, blind moon-seers, and haunted dwarven smiths",
+              "await a reckoning.",
+              "Even those closest to the fire may harbor a creeping abyssal parasite",
+              "within their minds."
+            ],
+            [
+              "Will you sacrifice yourself to birth a <em>Bitter Dawn</em>,",
+              "drink the Elixir of Oblivion to become the <em>Usurper God</em>,",
+              "or repeat the <em>Fragile Stasis</em>?",
+              "Step toward the fire, Wayfarer.",
+              "<strong>The cycle awaits your blood.</strong>"
+            ]
+          ],
+          backdrop: "assets/ui/camp_console_bg.jpg",
+          tint: "radial-gradient(circle at 50% 35%, rgba(217, 165, 65, 0.24) 0%, rgba(16, 26, 34, 0.68) 62%, rgba(5, 8, 12, 0.94) 100%)",
+          particleColors: ["#ffd54f", "#ffab40", "#ff6e40", "#ffe082"]
+        }
+      ];
+
+      const storyScreen = document.getElementById("storyIntroScreen");
+      const campAwakening = document.getElementById("campAwakeningTransition");
+      const backdropA = document.getElementById("storyBackdropA");
+      const backdropB = document.getElementById("storyBackdropB");
+      const tintLayer = document.getElementById("storyTintLayer");
+      const actBadge = document.getElementById("storyActBadge");
+      const actLocation = document.getElementById("storyActLocation");
+      const chapterTitle = document.getElementById("storyChapterTitle");
+      const epigraph = document.getElementById("storyEpigraph");
+      const storyBody = document.getElementById("storyBody");
+      const promptHint = document.getElementById("storyPromptHint");
+      const autoBar = document.getElementById("storyAutoBar");
+      const prevBtn = document.getElementById("storyPrevBtn");
+      const nextBtn = document.getElementById("storyNextBtn");
+      const nextBtnLabel = document.getElementById("storyNextBtnLabel");
+      const skipBtn = document.getElementById("storySkipBtn");
+      const autoBtn = document.getElementById("storyAutoBtn");
+      const muteBtn = document.getElementById("storyMuteBtn");
+      const parchmentCard = document.getElementById("storyParchmentCard");
+      const runeDots = Array.from(document.querySelectorAll(".story-rune-dot"));
+      const particleCanvas = document.getElementById("storyParticleCanvas");
+
+      let currentAct = 0;
+      let storyActive = false;
+      let useBackdropA = true;
+      let autoAdvance = true;
+      let actTimer = 0;
+      const ACT_DURATION_MS = 24000;
+      const STORY_BG_VOL = 0.16;
+      const POST_SPEECH_HOLD_MS = 1100;
+      let rafId = 0;
+      let lastFrameTime = 0;
+      let storyAudio = null;
+      let storyAudioSrc = "";
+      let storyFadeTimer = 0;
+      let storyVoiceAudio = null;
+      let storyMuted = false;
+      let particles = [];
+      let phraseTimers = [];
+      let actPhraseCues = [];
+      let actSpeechDurationSec = 24;
+      let actVoiceFinished = false;
+      let actPostVoiceMs = 0;
+      let allPhrasesRevealed = false;
+
+      function getAudioCtx() {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) return null;
+        const ctx = window._storyAudioCtx || (window._storyAudioCtx = new Ctx());
+        if (ctx.state === "suspended") ctx.resume().catch(() => {});
+        return ctx;
+      }
+
+      /* Epic Start Button Sound Effect */
+      function playStartButtonSound() {
+        try {
+          const ctx = getAudioCtx();
+          if (!ctx) return;
+          const t = ctx.currentTime;
+
+          // 1. Deep War-Drum Sub Impact
+          const drumOsc = ctx.createOscillator();
+          const drumGain = ctx.createGain();
+          drumOsc.type = "sine";
+          drumOsc.frequency.setValueAtTime(118, t);
+          drumOsc.frequency.exponentialRampToValueAtTime(34, t + 0.65);
+          drumGain.gain.setValueAtTime(0.001, t);
+          drumGain.gain.linearRampToValueAtTime(0.28, t + 0.02);
+          drumGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.75);
+          drumOsc.connect(drumGain);
+          drumGain.connect(ctx.destination);
+          drumOsc.start(t);
+          drumOsc.stop(t + 0.78);
+
+          // 2. Resonant Dark-Fantasy Fifth Chord (D3 - A3 - D4 - F#4)
+          const chordFreqs = [146.83, 220.0, 293.66, 369.99, 587.33];
+          chordFreqs.forEach((f, idx) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = idx % 2 === 0 ? "triangle" : "sine";
+            osc.frequency.setValueAtTime(f, t + idx * 0.018);
+            osc.frequency.exponentialRampToValueAtTime(f * 0.998, t + 2.2);
+            const peak = 0.055 / (1 + idx * 0.25);
+            gain.gain.setValueAtTime(0.0001, t);
+            gain.gain.linearRampToValueAtTime(peak, t + 0.05 + idx * 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.0001, t + 2.25);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(t);
+            osc.stop(t + 2.3);
+          });
+        } catch (_) {}
+      }
+
+      function playStartHoverSound() {
+        try {
+          const ctx = getAudioCtx();
+          if (!ctx) return;
+          const t = ctx.currentTime;
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = "sine";
+          osc.frequency.setValueAtTime(520, t);
+          osc.frequency.exponentialRampToValueAtTime(680, t + 0.06);
+          gain.gain.setValueAtTime(0.0001, t);
+          gain.gain.linearRampToValueAtTime(0.018, t + 0.01);
+          gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.07);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(t);
+          osc.stop(t + 0.08);
+        } catch (_) {}
+      }
+
+      function playStoryChime(freq = 196) {
+        if (storyMuted) return;
+        try {
+          const ctx = getAudioCtx();
+          if (!ctx) return;
+          const nowTime = ctx.currentTime;
+          const osc = ctx.createOscillator();
+          const osc2 = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = "sine";
+          osc2.type = "triangle";
+          osc.frequency.setValueAtTime(freq, nowTime);
+          osc.frequency.exponentialRampToValueAtTime(freq * 0.995, nowTime + 1.8);
+          osc2.frequency.setValueAtTime(freq * 1.5, nowTime);
+          gain.gain.setValueAtTime(0.0001, nowTime);
+          gain.gain.linearRampToValueAtTime(0.045, nowTime + 0.08);
+          gain.gain.exponentialRampToValueAtTime(0.0001, nowTime + 1.85);
+          osc.connect(gain);
+          osc2.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(nowTime);
+          osc2.start(nowTime);
+          osc.stop(nowTime + 1.9);
+          osc2.stop(nowTime + 1.9);
+        } catch (_) {}
+      }
+
+      function playPhraseWhisperTick(stepIdx = 0) {
+        if (storyMuted) return;
+        try {
+          const ctx = getAudioCtx();
+          if (!ctx) return;
+          const t = ctx.currentTime;
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = "sine";
+          const baseFreq = 260 + (stepIdx % 5) * 22;
+          osc.frequency.setValueAtTime(baseFreq, t);
+          osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.12, t + 0.14);
+          gain.gain.setValueAtTime(0.0001, t);
+          gain.gain.linearRampToValueAtTime(0.012, t + 0.025);
+          gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(t);
+          osc.stop(t + 0.17);
+        } catch (_) {}
+      }
+
+      function playCampAwakeningSound() {
+        if (storyMuted) return;
+        try {
+          const ctx = getAudioCtx();
+          if (!ctx) return;
+          const t = ctx.currentTime;
+          const notes = [196.0, 293.66, 392.0, 493.88, 587.33];
+          notes.forEach((f, i) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = i < 2 ? "triangle" : "sine";
+            osc.frequency.setValueAtTime(f, t + i * 0.09);
+            gain.gain.setValueAtTime(0.0001, t + i * 0.09);
+            gain.gain.linearRampToValueAtTime(0.036 / (1 + i * 0.2), t + i * 0.09 + 0.18);
+            gain.gain.exponentialRampToValueAtTime(0.0001, t + 2.4);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(t + i * 0.09);
+            osc.stop(t + 2.45);
+          });
+        } catch (_) {}
+      }
+
+      function clearPhraseTimers() {
+        while (phraseTimers.length) {
+          clearTimeout(phraseTimers.pop());
+        }
+      }
+
+      function clearStoryMusicFade() {
+        if (storyFadeTimer) {
+          clearInterval(storyFadeTimer);
+          storyFadeTimer = 0;
+        }
+      }
+
+      function syncStoryActMusic(musicSrc) {
+        if (!musicSrc) return;
+        clearStoryMusicFade();
+        if (storyAudio && storyAudioSrc === musicSrc) {
+          storyAudio.volume = STORY_BG_VOL;
+          if (!storyMuted && storyAudio.paused) {
+            storyAudio.play().catch(() => {});
+          }
+          return;
+        }
+        if (storyAudio) {
+          try {
+            storyAudio.pause();
+            storyAudio.currentTime = 0;
+          } catch (_) {}
+          storyAudio = null;
+          storyAudioSrc = "";
+        }
+        try {
+          const bg = new Audio(musicSrc);
+          bg.loop = true;
+          bg.volume = STORY_BG_VOL;
+          storyAudio = bg;
+          storyAudioSrc = musicSrc;
+          if (!storyMuted) {
+            bg.play().catch(() => {});
+          }
+        } catch (_) {}
+      }
+
+      function stopStoryVoice() {
+        if (storyVoiceAudio) {
+          try {
+            storyVoiceAudio.onended = null;
+            storyVoiceAudio.pause();
+            storyVoiceAudio.currentTime = 0;
+          } catch (_) {}
+          storyVoiceAudio = null;
+        }
+        actVoiceFinished = false;
+        actPostVoiceMs = 0;
+      }
+
+      function estimatePhraseWeight(html, isParaEnd) {
+        const plain = String(html || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+        let w = Math.max(4, plain.length);
+        const pauses = (plain.match(/[.,;:!?—-]/g) || []).length;
+        w += pauses * 4 + (isParaEnd ? 8 : 0);
+        return w;
+      }
+
+      function revealAllPhrasesInstantly() {
+        clearPhraseTimers();
+        const nodes = document.querySelectorAll("#storyIntroScreen .story-phrase");
+        nodes.forEach((el) => {
+          el.classList.add("phrase-visible");
+          el.classList.remove("phrase-glow-active");
+        });
+        allPhrasesRevealed = true;
+        if (promptHint) {
+          promptHint.innerHTML = currentAct === STORY_ACTS.length - 1
+            ? "Click card or press <kbd>SPACE</kbd> to <strong>Enter Valley Camp ⚔️</strong>"
+            : "Click card or press <kbd>SPACE</kbd> for <strong>Next Chapter →</strong>";
+        }
+      }
+
+      function initStoryParticles() {
+        if (!particleCanvas) return;
+        particleCanvas.width = window.innerWidth;
+        particleCanvas.height = window.innerHeight;
+        particles = [];
+        const count = 48;
+        for (let i = 0; i < count; i++) {
+          particles.push({
+            x: Math.random() * particleCanvas.width,
+            y: Math.random() * particleCanvas.height,
+            r: 1.1 + Math.random() * 2.4,
+            vx: (Math.random() - 0.5) * 0.35,
+            vy: -0.35 - Math.random() * 0.65,
+            alpha: 0.2 + Math.random() * 0.65,
+            phase: Math.random() * Math.PI * 2,
+            colorIdx: i % 4
+          });
+        }
+      }
+
+      function renderStoryAct(index, playSound = true) {
+        clearPhraseTimers();
+        allPhrasesRevealed = false;
+        currentAct = Math.max(0, Math.min(STORY_ACTS.length - 1, index));
+        const act = STORY_ACTS[currentAct];
+        actTimer = 0;
+        if (autoBar) autoBar.style.width = "0%";
+
+        // Crossfade Ken Burns Backdrops
+        if (backdropA && backdropB) {
+          const incoming = useBackdropA ? backdropA : backdropB;
+          const outgoing = useBackdropA ? backdropB : backdropA;
+          incoming.style.backgroundImage = `url('${act.backdrop}')`;
+          incoming.classList.remove("ken-burns-reset");
+          void incoming.offsetWidth;
+          incoming.classList.add("active");
+          outgoing.classList.remove("active");
+          useBackdropA = !useBackdropA;
+        }
+        if (tintLayer) {
+          tintLayer.style.background = act.tint;
+        }
+
+        // Animate card content transition
+        if (parchmentCard) {
+          parchmentCard.classList.remove("act-fade-in");
+          void parchmentCard.offsetWidth;
+          parchmentCard.classList.add("act-fade-in");
+        }
+
+        if (actBadge) actBadge.textContent = act.badge;
+        if (actLocation) actLocation.textContent = act.location;
+        if (chapterTitle) chapterTitle.textContent = act.title;
+
+        // Build phrase-by-phrase DOM for Epigraph + Body Paragraphs
+        if (epigraph) {
+          epigraph.innerHTML = (act.epigraphPhrases || [])
+            .map((phrase, pIdx) => `<span class="story-phrase" data-epigraph="1" data-pidx="${pIdx}">${phrase}</span> `)
+            .join("");
+        }
+        if (storyBody) {
+          storyBody.innerHTML = (act.paragraphPhrases || [])
+            .map((pList, paraIdx) => {
+              const inner = pList.map((phrase, pIdx) => `<span class="story-phrase" data-para="${paraIdx}" data-pidx="${pIdx}" data-para-end="${pIdx === pList.length - 1 ? 1 : 0}">${phrase}</span> `).join("");
+              return `<p class="story-para">${inner}</p>`;
+            })
+            .join("");
+        }
+
+        if (promptHint) {
+          promptHint.innerHTML = "Click card or press <kbd>SPACE</kbd> to reveal all text";
+        }
+
+        // Compute audio-synced phrase cues driven by speechVoiceAudio.currentTime
+        stopStoryVoice();
+        actSpeechDurationSec = act.speechDurationSec || (ACT_DURATION_MS / 1000);
+        const epNodes = Array.from(document.querySelectorAll('#storyIntroScreen .story-phrase[data-epigraph="1"]'));
+        const bodyNodes = Array.from(document.querySelectorAll('#storyIntroScreen .story-phrase:not([data-epigraph="1"])'));
+        const spokenNodes = act.speechIncludesEpigraph ? [...epNodes, ...bodyNodes] : [...bodyNodes];
+
+        actPhraseCues = [];
+        if (!act.speechIncludesEpigraph) {
+          epNodes.forEach((node) => {
+            actPhraseCues.push({ node, cueSec: 0.05, endSec: 2.5, shown: false, isEpigraphOnly: true });
+          });
+        }
+
+        const weights = spokenNodes.map((n) => estimatePhraseWeight(n.textContent, n.getAttribute("data-para-end") === "1"));
+        const totalWeight = Math.max(1, weights.reduce((a, b) => a + b, 0));
+        const leadInSec = 0.18;
+        const spokenWindowSec = Math.max(4, actSpeechDurationSec - leadInSec - 0.55);
+        let cumWeight = 0;
+        spokenNodes.forEach((node, idx) => {
+          const w = weights[idx];
+          const cueSec = leadInSec + (cumWeight / totalWeight) * spokenWindowSec;
+          cumWeight += w;
+          const endSec = leadInSec + (cumWeight / totalWeight) * spokenWindowSec;
+          actPhraseCues.push({ node, cueSec, endSec, shown: false, isEpigraphOnly: false });
+        });
+
+        // Start ambient Ancient Ruin music & ElevenLabs narration track for this Act
+        syncStoryActMusic(act.musicSrc);
+        if (act.speechSrc) {
+          try {
+            const voice = new Audio(act.speechSrc);
+            voice.volume = 0.95;
+            voice.muted = storyMuted;
+            voice.addEventListener("loadedmetadata", () => {
+              if (Number.isFinite(voice.duration) && voice.duration > 1 && storyVoiceAudio === voice) {
+                actSpeechDurationSec = voice.duration;
+              }
+            });
+            voice.addEventListener("ended", () => {
+              if (storyVoiceAudio === voice) {
+                actVoiceFinished = true;
+                actPostVoiceMs = 0;
+                actPhraseCues.forEach((c) => {
+                  if (!c.shown) {
+                    c.shown = true;
+                    c.node.classList.add("phrase-visible");
+                  }
+                  c.node.classList.remove("phrase-glow-active");
+                });
+                allPhrasesRevealed = true;
+                if (promptHint) {
+                  promptHint.innerHTML = currentAct === STORY_ACTS.length - 1
+                    ? "Click card or press <kbd>SPACE</kbd> to <strong>Enter Valley Camp ⚔️</strong>"
+                    : "Click card or press <kbd>SPACE</kbd> for <strong>Next Chapter →</strong>";
+                }
+              }
+            });
+            storyVoiceAudio = voice;
+            voice.play().catch(() => {});
+          } catch (_) {}
+        }
+
+        // Update Navigation Buttons & Rune Dots
+        if (prevBtn) {
+          prevBtn.disabled = currentAct === 0;
+          prevBtn.style.opacity = currentAct === 0 ? "0.38" : "1";
+        }
+        if (nextBtnLabel && nextBtn) {
+          if (currentAct === STORY_ACTS.length - 1) {
+            nextBtnLabel.textContent = "Enter Valley Camp ⚔️";
+            nextBtn.classList.add("story-nav-final");
+          } else {
+            nextBtnLabel.textContent = "Next Chapter →";
+            nextBtn.classList.remove("story-nav-final");
+          }
+        }
+        runeDots.forEach((dot, idx) => {
+          dot.classList.toggle("active", idx === currentAct);
+          dot.classList.toggle("completed", idx < currentAct);
+        });
+
+        if (playSound) {
+          const freqs = [174.61, 196.0, 164.81, 220.0];
+          playStoryChime(freqs[currentAct] || 196);
+        }
+      }
+
+      function storyLoop(ts) {
+        if (!storyActive) return;
+        const dt = lastFrameTime ? Math.min(100, ts - lastFrameTime) : 16;
+        lastFrameTime = ts;
+
+        const hasLiveVoice = Boolean(storyVoiceAudio && !storyVoiceAudio.paused && !actVoiceFinished && Number.isFinite(storyVoiceAudio.currentTime));
+        if (hasLiveVoice) {
+          actTimer = storyVoiceAudio.currentTime * 1000;
+        } else if (actVoiceFinished) {
+          actPostVoiceMs += dt;
+          actTimer = actSpeechDurationSec * 1000 + actPostVoiceMs;
+        } else {
+          actTimer += dt;
+        }
+
+        const clockSec = actTimer / 1000;
+
+        // Sync phrase reveal & spoken highlight directly to narrator clock
+        if (actPhraseCues.length && !allPhrasesRevealed) {
+          let allShown = true;
+          for (let i = 0; i < actPhraseCues.length; i++) {
+            const cue = actPhraseCues[i];
+            if (!cue.shown && clockSec >= cue.cueSec) {
+              cue.shown = true;
+              cue.node.classList.add("phrase-visible");
+              if (!cue.isEpigraphOnly && storyMuted) playPhraseWhisperTick(i);
+            }
+            if (!cue.shown) allShown = false;
+            const isSpeaking = !cue.isEpigraphOnly && !actVoiceFinished && clockSec >= cue.cueSec && clockSec < cue.endSec;
+            cue.node.classList.toggle("phrase-glow-active", isSpeaking);
+          }
+          if (allShown && !allPhrasesRevealed) {
+            allPhrasesRevealed = true;
+            if (promptHint) {
+              promptHint.innerHTML = currentAct === STORY_ACTS.length - 1
+                ? "Click card or press <kbd>SPACE</kbd> to <strong>Enter Valley Camp ⚔️</strong>"
+                : "Click card or press <kbd>SPACE</kbd> for <strong>Next Chapter →</strong>";
+            }
+          }
+        } else if (actPhraseCues.length && !actVoiceFinished) {
+          for (let i = 0; i < actPhraseCues.length; i++) {
+            const cue = actPhraseCues[i];
+            const isSpeaking = !cue.isEpigraphOnly && clockSec >= cue.cueSec && clockSec < cue.endSec;
+            cue.node.classList.toggle("phrase-glow-active", isSpeaking);
+          }
+        }
+
+        // Sync Auto-Advance progress bar to narration length + brief hold
+        if (autoAdvance) {
+          const totalActMs = actSpeechDurationSec * 1000 + POST_SPEECH_HOLD_MS;
+          const pct = Math.min(100, (actTimer / totalActMs) * 100);
+          if (autoBar) autoBar.style.width = pct + "%";
+          const readyToAdvance = actVoiceFinished ? (actPostVoiceMs >= POST_SPEECH_HOLD_MS) : (actTimer >= totalActMs);
+          if (readyToAdvance) {
+            if (currentAct < STORY_ACTS.length - 1) {
+              renderStoryAct(currentAct + 1, true);
+            } else {
+              closeStoryIntro();
+              return;
+            }
+          }
+        }
+
+        // Render ambient particles
+        if (particleCanvas) {
+          const ctx = particleCanvas.getContext("2d");
+          if (ctx) {
+            ctx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
+            const palette = STORY_ACTS[currentAct]?.particleColors || ["#ffd86b"];
+            for (let i = 0; i < particles.length; i++) {
+              const p = particles[i];
+              p.phase += dt * 0.0025;
+              p.x += p.vx + Math.sin(p.phase) * 0.22;
+              p.y += p.vy;
+              if (p.y < -10) {
+                p.y = particleCanvas.height + 10;
+                p.x = Math.random() * particleCanvas.width;
+              }
+              if (p.x < -10) p.x = particleCanvas.width + 10;
+              if (p.x > particleCanvas.width + 10) p.x = -10;
+
+              const flicker = 0.55 + 0.45 * Math.sin(p.phase * 1.7);
+              ctx.globalAlpha = p.alpha * flicker;
+              ctx.fillStyle = palette[p.colorIdx % palette.length];
+              ctx.beginPath();
+              ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+              ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+          }
+        }
+
+        rafId = requestAnimationFrame(storyLoop);
+      }
+
+      function openStoryIntro() {
+        if (!storyScreen) return;
+        storyActive = true;
+        lastFrameTime = 0;
+        useBackdropA = true;
+
+        const startVid = document.getElementById("startVideo");
+        if (startVid && !startVid.paused) {
+          try { startVid.pause(); } catch (_) {}
+        }
+
+        clearStoryMusicFade();
+        if (storyAudio) {
+          try {
+            storyAudio.pause();
+            storyAudio.currentTime = 0;
+          } catch (_) {}
+          storyAudio = null;
+          storyAudioSrc = "";
+        }
+
+        initStoryParticles();
+        storyScreen.style.display = "flex";
+        storyScreen.classList.remove("story-closing");
+        void storyScreen.offsetWidth;
+        storyScreen.classList.add("story-visible");
+
+        renderStoryAct(0, true);
+        cancelAnimationFrame(rafId);
+        rafId = requestAnimationFrame(storyLoop);
+      }
+
+      /* Smooth Cinematic Awakening Transition into Valley Camp */
+      function closeStoryIntro() {
+        if (!storyActive || !storyScreen) return;
+        storyActive = false;
+        clearPhraseTimers();
+        stopStoryVoice();
+        cancelAnimationFrame(rafId);
+        localStorage.setItem("pixelvivor.storyPrologueSeen", "1");
+
+        playCampAwakeningSound();
+
+        // Fade out prologue audio smoothly
+        clearStoryMusicFade();
+        if (storyAudio) {
+          try {
+            const fadingAudio = storyAudio;
+            let vol = fadingAudio.volume;
+            storyFadeTimer = setInterval(() => {
+              vol = Math.max(0, vol - 0.05);
+              fadingAudio.volume = vol;
+              if (vol <= 0) {
+                clearStoryMusicFade();
+                fadingAudio.pause();
+                fadingAudio.currentTime = 0;
+                fadingAudio.volume = STORY_BG_VOL;
+              }
+            }, 60);
+          } catch (_) {}
+        }
+
+        const campShell = document.querySelector(".camp-shell");
+        if (campShell) {
+          campShell.classList.add("camp-entering");
+        }
+
+        if (campAwakening) {
+          campAwakening.style.display = "flex";
+          campAwakening.classList.remove("awakening-fade-out");
+          void campAwakening.offsetWidth;
+          campAwakening.classList.add("awakening-visible");
+
+          // Hide story screen behind the awakening curtain once curtain is opaque
+          setTimeout(() => {
+            storyScreen.classList.remove("story-visible");
+            storyScreen.style.display = "none";
+            if (campShell) {
+              campShell.classList.add("camp-enter-active");
+            }
+            if (window.syncMusicTrack) window.syncMusicTrack();
+          }, 580);
+
+          // Part the curtain to reveal Valley Camp smoothly
+          setTimeout(() => {
+            campAwakening.classList.add("awakening-fade-out");
+          }, 1450);
+
+          setTimeout(() => {
+            campAwakening.classList.remove("awakening-visible", "awakening-fade-out");
+            campAwakening.style.display = "none";
+            if (campShell) {
+              campShell.classList.remove("camp-entering", "camp-enter-active");
+            }
+          }, 2450);
+        } else {
+          storyScreen.classList.remove("story-visible");
+          storyScreen.classList.add("story-closing");
+          setTimeout(() => {
+            storyScreen.style.display = "none";
+            storyScreen.classList.remove("story-closing");
+            if (window.syncMusicTrack) window.syncMusicTrack();
+          }, 600);
+        }
+      }
+
+      function advanceOrRevealStory() {
+        if (!allPhrasesRevealed) {
+          revealAllPhrasesInstantly();
+          return;
+        }
+        if (currentAct < STORY_ACTS.length - 1) {
+          renderStoryAct(currentAct + 1, true);
+        } else {
+          closeStoryIntro();
+        }
+      }
+
+      window.openStoryIntro = openStoryIntro;
+      window.closeStoryIntro = closeStoryIntro;
+
+      // Bind Start Screen Hover & Click Sounds
+      document.querySelectorAll(".start-btn-graphic").forEach((btn) => {
+        btn.addEventListener("mouseenter", () => playStartHoverSound());
+      });
+
+      // Bind Story Controls
+      if (skipBtn) {
+        skipBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          closeStoryIntro();
+        });
+      }
+      if (prevBtn) {
+        prevBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          if (currentAct > 0) renderStoryAct(currentAct - 1, true);
+        });
+      }
+      if (nextBtn) {
+        nextBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          if (currentAct < STORY_ACTS.length - 1) {
+            renderStoryAct(currentAct + 1, true);
+          } else {
+            closeStoryIntro();
+          }
+        });
+      }
+      if (parchmentCard) {
+        parchmentCard.addEventListener("click", () => {
+          advanceOrRevealStory();
+        });
+      }
+      runeDots.forEach((dot) => {
+        dot.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const idx = parseInt(dot.getAttribute("data-act") || "0", 10);
+          renderStoryAct(idx, true);
+        });
+      });
+      if (autoBtn) {
+        autoBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          autoAdvance = !autoAdvance;
+          autoBtn.classList.toggle("active", autoAdvance);
+          autoBtn.textContent = autoAdvance ? "⏳ Auto: ON" : "⏸ Auto: OFF";
+          if (!autoAdvance && autoBar) autoBar.style.width = "0%";
+        });
+      }
+      if (muteBtn) {
+        muteBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          storyMuted = !storyMuted;
+          muteBtn.textContent = storyMuted ? "🔇 Muted" : "🔊 Audio";
+          if (storyAudio) {
+            if (storyMuted) storyAudio.pause();
+            else storyAudio.play().catch(() => {});
+          }
+          if (storyVoiceAudio) {
+            storyVoiceAudio.muted = storyMuted;
+            if (!storyMuted && storyVoiceAudio.paused && !actVoiceFinished) {
+              storyVoiceAudio.play().catch(() => {});
+            }
+          }
+        });
+      }
+
+      const openPrologueBtn = document.getElementById("openStoryPrologueBtn");
+      if (openPrologueBtn) {
+        openPrologueBtn.addEventListener("click", () => {
+          openStoryIntro();
+        });
+      }
+
+      window.addEventListener("resize", () => {
+        if (storyActive && particleCanvas) {
+          particleCanvas.width = window.innerWidth;
+          particleCanvas.height = window.innerHeight;
+        }
+      });
+
+      window.addEventListener("keydown", (e) => {
+        if (!storyActive) return;
+        if (e.key === "Escape") {
+          e.preventDefault();
+          e.stopPropagation();
+          closeStoryIntro();
+        } else if (e.key === " " || e.key === "Enter") {
+          e.preventDefault();
+          e.stopPropagation();
+          advanceOrRevealStory();
+        } else if (e.key === "ArrowRight") {
+          e.preventDefault();
+          e.stopPropagation();
+          if (currentAct < STORY_ACTS.length - 1) {
+            renderStoryAct(currentAct + 1, true);
+          } else {
+            closeStoryIntro();
+          }
+        } else if (e.key === "ArrowLeft") {
+          e.preventDefault();
+          e.stopPropagation();
+          if (currentAct > 0) {
+            renderStoryAct(currentAct - 1, true);
+          }
+        }
+      }, true);
+      
+      btnStart.addEventListener("click", () => {
+          playStartButtonSound();
+          startScreen.style.transition = "opacity 0.45s ease";
+          startScreen.style.opacity = "0";
+          loadingScreen.style.display = "flex";
+          loadingScreen.style.opacity = "0";
+          loadingScreen.style.transition = "opacity 0.5s ease";
+          if (loadingTip) loadingTip.textContent = getRandomTip();
+          requestAnimationFrame(() => {
+            loadingScreen.style.opacity = "1";
+          });
+          setTimeout(() => {
+            const startVid = document.getElementById("startVideo");
+            if (startVid) { try { startVid.pause(); } catch(e) {} }
+            startScreen.style.display = "none";
+          }, 460);
+          
+          let progress = 0;
+          let tipSwapped = false;
+          const totalDuration = 7200; // Slower 7.2 seconds loading bar
+          const stepMs = 50;
+          const increment = 100 / (totalDuration / stepMs);
+          const interval = setInterval(() => {
+              progress += increment;
+              if (!tipSwapped && progress >= 52 && loadingTip) {
+                  tipSwapped = true;
+                  loadingTip.style.opacity = "0";
+                  setTimeout(() => {
+                    loadingTip.textContent = getRandomTip();
+                    loadingTip.style.opacity = "1";
+                  }, 250);
+              }
+              if (progress >= 100) {
+                  progress = 100;
+                  clearInterval(interval);
+                  openStoryIntro();
+                  loadingScreen.style.opacity = "0";
+                  setTimeout(() => {
+                      loadingScreen.style.display = "none";
+                  }, 520);
+              }
+              loadingBar.style.width = progress + "%";
+          }, stepMs);
+      });
+  });
+</script>
+
+
+  <!-- DEMO VICTORY OVERLAY -->
+  <div id="demoVictoryModal">
+    <div class="demo-modal-box">
+      <div class="demo-modal-title" id="demoModalTitle">🏆 DEMO CLEARED!</div>
+      <div class="demo-modal-sub" id="demoVictorySub">You vanquished the Ancient Biome Boss!</div>
+
+      <div class="demo-stats-grid">
+        <div class="demo-stat-item">
+          <span>TIME SURVIVED</span>
+          <strong id="demoStatTime">--:--</strong>
+        </div>
+        <div class="demo-stat-item">
+          <span>MONSTERS SLAIN</span>
+          <strong id="demoStatKills">0</strong>
+        </div>
+        <div class="demo-stat-item">
+          <span>HERO LEVEL</span>
+          <strong id="demoStatLevel">Lv 1</strong>
+        </div>
+        <div class="demo-stat-item">
+          <span>BOSS DEFEATED</span>
+          <strong id="demoStatBoss" style="color:#ffd700;">--</strong>
+        </div>
+      </div>
+
+      <div class="demo-teaser-text">
+        ✨ <strong>Your journey has just begun!</strong><br>
+        In the full release of <strong>PIXELVIVOR</strong>: delve into the Sunken Abyss to confront the legendary Kraken, brave Dimension X against the Void God, unlock 10+ mythical heroes, forge relic synergies, and tame mount companions!
+      </div>
+
+      <div class="demo-btn-group">
+        <button class="demo-btn-primary" id="btnDemoWishlist">⭐ STEAM WISHLIST (COMING SOON)</button>
+        <button class="demo-btn-secondary" id="btnDemoFeedback">💬 LEAVE FEEDBACK ON ITCH.IO</button>
+        <button class="demo-btn-secondary" id="btnDemoRestart">🔄 HARD RESET & PLAY AGAIN</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.showDemoVictoryModal = function(bossEnemy, isTimeout) {
+      const modal = document.getElementById('demoVictoryModal');
+      if (!modal) return;
+      if (typeof window.state !== 'undefined') window.state.paused = true;
+
+      const elapsed = typeof window.elapsed !== 'undefined' ? window.elapsed : (typeof window.state !== 'undefined' ? window.state.elapsed || 0 : 0);
+      const mins = Math.floor(elapsed / 60);
+      const secs = Math.floor(elapsed % 60);
+      const timeStr = String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+
+      document.getElementById('demoStatTime').textContent = timeStr;
+      document.getElementById('demoStatKills').textContent = (typeof window.killCount !== 'undefined' ? window.killCount : 0);
+      document.getElementById('demoStatLevel').textContent = 'Lv ' + (typeof window.player !== 'undefined' ? window.player.level || 1 : 1);
+
+      if (isTimeout) {
+        document.getElementById('demoModalTitle').textContent = '⏳ DEMO COMPLETED!';
+        document.getElementById('demoVictorySub').textContent = '20-Minute Survival Limit Reached! You survived the untamed frontier for 20 full minutes.';
+        document.getElementById('demoStatBoss').textContent = bossEnemy ? (bossEnemy.type.charAt(0).toUpperCase() + bossEnemy.type.slice(1)) : 'Survived (20m)';
+      } else {
+        document.getElementById('demoModalTitle').textContent = '🏆 DEMO VICTORY!';
+        const bossName = (bossEnemy && bossEnemy.type) ? (bossEnemy.type.charAt(0).toUpperCase() + bossEnemy.type.slice(1)) : 'Ancient Titan';
+        document.getElementById('demoStatBoss').textContent = bossName;
+        document.getElementById('demoVictorySub').textContent = 'You conquered the wilderness and felled the ' + bossName + '!';
+      }
+
+      modal.classList.add('active');
+    };
+
+    document.getElementById('btnDemoWishlist')?.addEventListener('click', function() {
+      alert('⭐ Thank you so much for your support!\n\nThe official Steam store page is currently being prepared.\nBookmark or follow this itch.io page to be the first to know the moment our Steam Wishlist goes live!');
+    });
+
+    document.getElementById('btnDemoFeedback')?.addEventListener('click', function() {
+      if (window.parent && window.parent !== window) {
+        window.parent.location.hash = '#comments';
+      } else {
+        alert('We would love your feedback! Please drop a comment on our itch.io page below the game window. Thank you!');
+      }
+    });
+
+    document.getElementById('btnDemoRestart')?.addEventListener('click', function() {
+      try {
+        localStorage.removeItem('pixelvivor.camp');
+        localStorage.removeItem('pixelvivor.log');
+        localStorage.removeItem('pixelvivor_settings');
+      } catch(e) {}
+      window.location.reload();
+    });
+  </script>
+
+</body>
+</html>
+
+
+
+
+
