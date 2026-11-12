@@ -3005,6 +3005,8 @@ body{margin:0;overflow:hidden;background:#0b0b12;font-family:sans-serif;color:#f
 
 
 .fullscreen-overlay { position: fixed; inset: 0; }
+#startScreen { background: #000; }
+#startVideo { background: #000; }
 
 .start-menu-btn {
 
